@@ -11,17 +11,37 @@ import org.litote.kmongo.save
 import java.io.File
 import java.nio.charset.StandardCharsets
 
+val connectionString: String = System.getenv("MONGO_URI")
+val mongo = KMongo.createClient(connectionString)
+val database = mongo.getDatabase("starburst")
+
 @ExperimentalStdlibApi
 fun main() {
-    val connectionString = System.getenv("MONGO_URI")
-    val mongo = KMongo.createClient(connectionString)
-    val database = mongo.getDatabase("starburst")
-    val col1 = database.getCollection<ZacksFundamentalAWrapper>()
+//    fundamentalsA()
+    salesEstimates()
+}
+
+@ExperimentalStdlibApi
+private fun salesEstimates() {
     val col2 = database.getCollection<ZacksSalesEstimatesWrapper>()
+    grass<ZacksSalesEstimates>()
+        .harvest(csvReader().readAllWithHeader(File("ZACKS_SE.csv")))
+        .forEach {
+            val _id = Hashing
+                .sha256()
+                .hashString(
+                    "${it.m_ticker}${it.per_end_date}${it.per_type}",
+                    StandardCharsets.UTF_8
+                )
+                .toString()
+            col2.save(ZacksSalesEstimatesWrapper(_id = _id, content = it))
+        }
+}
 
-    grass<ZacksFundamentalA> {
-
-    }
+@ExperimentalStdlibApi
+private fun fundamentalsA() {
+    val col1 = database.getCollection<ZacksFundamentalAWrapper>()
+    grass<ZacksFundamentalA>()
         .harvest(csvReader().readAllWithHeader(File("ZACKS_FC.csv")))
         .forEach {
             val _id = Hashing
@@ -33,18 +53,4 @@ fun main() {
                 .toString()
             col1.save(ZacksFundamentalAWrapper(_id = _id, content = it))
         }
-
-    grass<ZacksSalesEstimates>()
-        .harvest(csvReader().readAllWithHeader(File("ZACKS-SE.csv")))
-        .forEach {
-            val _id = Hashing
-                .sha256()
-                .hashString(
-                    "${it.m_ticker}${it.per_end_date}${it.per_type}",
-                    StandardCharsets.UTF_8
-                )
-                .toString()
-            col2.save(ZacksSalesEstimatesWrapper(_id = _id, content = it))
-        }
-
 }

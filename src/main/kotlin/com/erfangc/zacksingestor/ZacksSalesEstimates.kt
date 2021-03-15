@@ -1,8 +1,8 @@
 package com.erfangc.zacksingestor
+
 import java.time.LocalDate
 
 data class ZacksSalesEstimates(
-    val file_prod_date: LocalDate? = null,
     val m_ticker: String? = null,
     val ticker: String? = null,
     val comp_name: String? = null,
